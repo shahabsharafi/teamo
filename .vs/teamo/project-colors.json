@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "ProjectMap": {
+    "c53d90d9-430a-41ad-acd4-ccfd086b6a43": {
+      "ProjectGuid": "c53d90d9-430a-41ad-acd4-ccfd086b6a43",
+      "DisplayName": "Teamo.Identity.API",
+      "ColorIndex": 0
+    }
+  },
+  "NextColorIndex": 1
+}
