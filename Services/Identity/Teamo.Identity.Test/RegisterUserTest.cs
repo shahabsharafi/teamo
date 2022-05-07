@@ -16,7 +16,7 @@ namespace Teamo.Identity.Test
         private readonly Mock<ILogger<RegisterUserHandler>> _logger;
         private readonly Mock<IMapper> _mapper;
         private readonly RegisterUserHandler _handler;
-        public RegisterUserTest()
+        public RegisterUserTest() : base()
         {
             _mapper = new Mock<IMapper>();
             _mapper.Setup(_ => _.Map<ApplicationUser>(It.IsAny<RegisterUserCommand>()))

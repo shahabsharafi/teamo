@@ -12,7 +12,7 @@ namespace Teamo.Identity.API.Infrastructure.Domain
     public class ForgotPasswordDto
     {        
         public string UserName { get; set; } = string.Empty;
-        public string TokenProvider { get; set; } = IdentitySettings.TOKEN_PROVIDER_NONE;  
+        public bool VerificationRequired { get; set; } = false;  
         public string VerificationCode { get; set; } = string.Empty;
         public string ResetToken { get; set; } = string.Empty;
     }
@@ -20,7 +20,6 @@ namespace Teamo.Identity.API.Infrastructure.Domain
     {
         public string UserNameOrEmail { get; set; } = string.Empty;
         public string NewPassword { get; set; } = string.Empty;
-        public string ConfirmNewPassword { get; set; } = string.Empty;
         public string VerificationCode { get; set; } = string.Empty;
         public string ResetToken { get; set; } = string.Empty;
 
@@ -29,30 +28,36 @@ namespace Teamo.Identity.API.Infrastructure.Domain
     public class ForgotPasswordHandler : IRequestHandler<ForgotPasswordCommand, ForgotPasswordDto>
     {
         private readonly ILogger<ForgotPasswordHandler> _logger;
-        private readonly IOptions<IdentitySettings> _options;
-        private readonly IMemoryCache _memoryCache;
-        private readonly IEmailService _emailService;
-        private readonly ISMSService _smsService;
-        private readonly UserManager<ApplicationUser> _userManager;
-        private readonly SignInManager<ApplicationUser> _signInManager;
 
+        private readonly IVerificationCodeService _verificationCodeService;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly IAuthenticationService _authenticationService;
         public ForgotPasswordHandler(
             ILogger<ForgotPasswordHandler> logger,
-            IOptions<IdentitySettings> options,
-            IEmailService emailService,
-            IMemoryCache memoryCache,
-            ISMSService smsService,
-            UserManager<ApplicationUser> userManager,
-            SignInManager<ApplicationUser> signInManager)
+            IAuthenticationService authenticationService,
+            IVerificationCodeService verificationCodeService,
+            UserManager<ApplicationUser> userManager)
         {
             _logger = logger;
-            _options = options;
-            _memoryCache = memoryCache;
-            _emailService = emailService;
-            _smsService = smsService;
+            _authenticationService = authenticationService;
+            _verificationCodeService = verificationCodeService;
             _userManager = userManager;
-            _signInManager = signInManager;
         }
+
+        /// <summary>
+        /// <para>Handle forgot password proccess</para>
+        /// <br>1- try to find user by email than by username</br> 
+        /// <br>2- check if user exists and not deleted</br> 
+        /// <br>3- check if user is locked</br> 
+        /// <br>4- check:</br>
+        /// <br>    4.1- if verification code is recieved check it and generate rest token</br>
+        /// <br>    4.2- if reset token is recieved reset password by reset token and check success</br>
+        /// <br>    4.3- else send verification code</br>
+        /// </summary>
+        /// <param name="request"></param>
+        /// <param name="cancellationToken"></param>
+        /// <returns></returns>
+        /// <exception cref="Exception"></exception>
         public async Task<ForgotPasswordDto> Handle(ForgotPasswordCommand request, CancellationToken cancellationToken)
         {
             ApplicationUser user = await _userManager.FindByEmailAsync(request.UserNameOrEmail.Trim());
@@ -65,100 +70,48 @@ namespace Teamo.Identity.API.Infrastructure.Domain
 
             if (user.LockoutEnd.HasValue && user.LockoutEnd > DateTime.Now.ToUniversalTime())
                 throw new Exception(Constants.Message.USER_ISUNAUTHORIZED);
-            
-            var userVerificationCodeKey = user.UserName + "_verfication_code";
-            if (string.IsNullOrEmpty(request.VerificationCode))
+
+            ForgotPasswordDto dto;
+            if (!string.IsNullOrEmpty(request.VerificationCode))
             {
-                await SendVerificationCode(user, _options.Value.TokenProvider, cancellationToken);
-                return new ForgotPasswordDto()
+                bool verified = await _verificationCodeService.VerifyCodeAsync(user, request.VerificationCode);
+                
+                if (!verified)
                 {
-                    UserName = user.UserName,
-                    TokenProvider = _options.Value.TokenProvider
+                    await _authenticationService.UnsuccessfulAuthentication(user);
+                    throw new Exception(Constants.Message.VERIFIY_CODE_IS_NOT_VALID);
+                }
+
+                var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
+                
+                dto = new ForgotPasswordDto()
+                {
+                    ResetToken = resetToken
                 };
             }
-            else if (!string.IsNullOrEmpty(request.VerificationCode))
+            else if (!string.IsNullOrEmpty(request.ResetToken))
             {
-                if (string.IsNullOrEmpty(request.NewPassword) && string.IsNullOrEmpty(request.ConfirmNewPassword))
-                {
-                    bool verified = await _userManager.VerifyTwoFactorTokenAsync(user, _options.Value.TokenProvider, request.VerificationCode);
-                    if (!verified)
-                    {
-                        await UnsuccessfulAuthentication(user);
-                        throw new Exception(Constants.Message.VERIFIY_CODE_IS_NOT_VALID);
-                    }
+                var resetPasswordResult = await _userManager.ResetPasswordAsync(user, request.ResetToken, request.NewPassword);
+                
+                if (!resetPasswordResult.Succeeded)
+                    throw new Exception(Constants.Message.FORGOT_PASSWORD_FALED);
 
-                    var resetToken = await _userManager.GeneratePasswordResetTokenAsync(user);
-                    return new ForgotPasswordDto()
-                    {
-                        ResetToken = resetToken
-                    };
-                }
-                else if (!string.IsNullOrEmpty(request.NewPassword) && !string.IsNullOrEmpty(request.ConfirmNewPassword))
-                {                    
-                    var resetPasswordResult = await _userManager.ResetPasswordAsync(user, request.ResetToken, request.NewPassword);
-                    if (!resetPasswordResult.Succeeded)
-                    {
-                        throw new Exception(Constants.Message.FORGOT_PASSWORD_FALED);
-                    }
-                }
-            }
-
-            _logger.LogInformation($"{user.UserName} pasword recoverd successfully");
-
-            return new ForgotPasswordDto();
-        }
-
-        private async Task UnsuccessfulAuthentication(ApplicationUser user)
-        {
-            if (user.AccessFailedCount > 2)
-            {
-                user.LockoutEnd = DateTime.Now.AddMinutes(2).ToUniversalTime();
-                user.AccessFailedCount = 0;
-                await _userManager.UpdateAsync(user);
-
-                throw new Exception(Constants.Message.USER_LOCKED);
+                dto = new ForgotPasswordDto();
             }
             else
             {
-                user.AccessFailedCount += 1;
-                await _userManager.UpdateAsync(user);                
-            }
-        }
-
-        private async Task SendVerificationCode(ApplicationUser user, string tokenProvider, CancellationToken cancellationToken)
-        {
-            if (user == null || string.IsNullOrEmpty(user.FullName) || string.IsNullOrEmpty(user.Email))
-                throw new ArgumentNullException();
-
-            var userVerificationCodeKey = user.UserName + "_verfication_code";
-            var token = await _userManager.GenerateTwoFactorTokenAsync(user, tokenProvider);
-            var msg = $"Use {token} to verify your login";
-
-            if (tokenProvider == TokenOptions.DefaultPhoneProvider)
-            { 
-                var sms = new SMS()
+                await _verificationCodeService.SendCodeAsync(user);
+                
+                dto = new ForgotPasswordDto()
                 {
-                    SenderNumber = "",
-                    ReciverNumber = new string[] { user.PhoneNumber },
-                    Message = msg
+                    UserName = user.UserName,
+                    VerificationRequired = true
                 };
-                await _smsService.SendAsync(sms);
-            }
-            else if (tokenProvider == TokenOptions.DefaultEmailProvider)
-            {
-                var userEmailAddress = new List<EmailAddress>(){
-                    new EmailAddress() { Name = user.FullName, Address = user.Email }
-                };
+            }                
 
-                var email = new EmailMessage()
-                {
-                    FromAddresses = null,
-                    ToAddresses = userEmailAddress,
-                    Subject = "Verification code",
-                    Content = msg
-                };
-                await _emailService.SendAsync(email);
-            }
+            _logger.LogInformation($"{user.UserName} pasword recoverd successfully");
+
+            return dto;
         }
     }
 }

@@ -14,7 +14,7 @@ namespace Teamo.Identity.Test
         private readonly Mock<ILogger<ChangePasswordHandler>> _logger;
         private readonly ChangePasswordHandler _handler;
         private readonly string NEW_PASSWORD = "654321";
-        public ChangePasswordTest()
+        public ChangePasswordTest() : base()
         {            
             _signInManager.Setup(_ => _.RefreshSignInAsync(It.IsAny<ApplicationUser>()));
 

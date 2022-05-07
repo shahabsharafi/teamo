@@ -50,9 +50,42 @@ namespace Teamo.Identity.Test
         protected readonly string EXISTS_USER_NAME = "user";
         protected readonly string NEW_EMAIL = "b@b.com";
         protected readonly string NEW_USER_NAME = "new_user";
-        protected readonly string PASSWORD = "123456";
+        protected readonly string PASSWORD = "111111";
+        protected readonly string WRONG_PASSWORD = "111112";
+        protected readonly string NEW_PASSWORD = "111113";
+        protected readonly string DELETED_USER_NAME = "deleted_user";
+        protected readonly string TWO_FACTOR_ENABLED_USER_NAME = "two_factor_enabled_user";
+        protected readonly ApplicationUser EXISTS_USER;
+        protected readonly ApplicationUser DELETED_USER;
+        protected readonly ApplicationUser TWO_FACTOR_ENABLED_USER;
+        protected readonly string VERIFICATION_CODE = "222222";
+        protected readonly string WRONG_VERIFICATION_CODE = "222221";
+        protected readonly string RESET_TOKEN = "333333";
+        protected readonly string WRONG_RESET_TOKEN = "333331";
         public BaseTestClass()
         {
+            EXISTS_USER = new()
+            {
+                Email = EXISTS_EMAIL,
+                UserName = EXISTS_USER_NAME,
+                IsDeleted = false
+            };
+
+            DELETED_USER = new()
+            {
+                Email = EXISTS_EMAIL,
+                UserName = EXISTS_USER_NAME,
+                IsDeleted = true
+            };
+
+            TWO_FACTOR_ENABLED_USER = new()
+            {
+                Email = EXISTS_EMAIL,
+                UserName = TWO_FACTOR_ENABLED_USER_NAME,
+                IsDeleted = false,   
+                TwoFactorEnabled = true
+            };
+
             var mockUserStore = new Mock<IUserStore<ApplicationUser>>();
             
             _userManager = new Mock<FakeUserManager>();
@@ -60,10 +93,16 @@ namespace Teamo.Identity.Test
             _signInManager = new Mock<FakeSignInManager>();
 
             _userManager.Setup(_ => _.FindByNameAsync(EXISTS_USER_NAME))
-                .ReturnsAsync(() => new ApplicationUser() { });
+                .ReturnsAsync(() => EXISTS_USER);
 
             _userManager.Setup(_ => _.FindByEmailAsync(EXISTS_EMAIL))
-                .ReturnsAsync(new ApplicationUser { UserName = NEW_EMAIL });            
+                .ReturnsAsync(() => EXISTS_USER);
+
+            _userManager.Setup(_ => _.FindByEmailAsync(DELETED_USER_NAME))
+               .ReturnsAsync(() => DELETED_USER);
+
+            _userManager.Setup(_ => _.FindByNameAsync(TWO_FACTOR_ENABLED_USER_NAME))
+               .ReturnsAsync(() => TWO_FACTOR_ENABLED_USER);
         }
     }
 }
