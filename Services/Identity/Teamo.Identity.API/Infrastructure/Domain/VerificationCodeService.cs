@@ -33,7 +33,7 @@ namespace Teamo.Identity.API.Infrastructure.Domain
         public async Task SendCodeAsync(ApplicationUser user)
         {
             string tokenProvider = _options.Value.TokenProvider;
-            if (user == null || string.IsNullOrEmpty(user.FullName) || string.IsNullOrEmpty(user.Email))
+            if (user == null || string.IsNullOrEmpty(user.FullName))
                 throw new ArgumentNullException();
 
             var userVerificationCodeKey = user.UserName + "_verfication_code";
@@ -42,6 +42,9 @@ namespace Teamo.Identity.API.Infrastructure.Domain
 
             if (tokenProvider == TokenOptions.DefaultPhoneProvider)
             {
+                if (string.IsNullOrEmpty(user.PhoneNumber))
+                    throw new ArgumentNullException();
+
                 var sms = new SMS()
                 {
                     SenderNumber = "",
@@ -52,6 +55,9 @@ namespace Teamo.Identity.API.Infrastructure.Domain
             }
             if (tokenProvider == TokenOptions.DefaultEmailProvider)
             {
+                if (string.IsNullOrEmpty(user.Email))
+                    throw new ArgumentNullException();
+
                 var userEmailAddress = new List<EmailAddress>(){
                     new EmailAddress() { Name = user.FullName, Address = user.Email }
                 };

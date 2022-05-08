@@ -1,5 +1,4 @@
-﻿using AutoMapper;
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Teamo.Identity.API.Infrastructure;
 using Teamo.Identity.API.Infrastructure.Domain;

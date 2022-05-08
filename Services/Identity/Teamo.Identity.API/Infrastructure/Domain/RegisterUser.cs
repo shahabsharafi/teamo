@@ -1,7 +1,6 @@
 ﻿using AutoMapper;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
-using System.Security.Claims;
 using Teamo.Identity.API.Infrastructure.Models;
 
 namespace Teamo.Identity.API.Infrastructure.Domain

@@ -1,10 +1,5 @@
-﻿using AutoMapper;
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
-using Teamo.Assets.Email;
-using Teamo.Assets.SMS;
 using Teamo.Identity.API.Infrastructure.Models;
 
 namespace Teamo.Identity.API.Infrastructure.Domain

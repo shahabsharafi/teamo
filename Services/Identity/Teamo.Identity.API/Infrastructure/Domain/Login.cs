@@ -1,11 +1,5 @@
-﻿using AutoMapper;
-using MediatR;
+﻿using MediatR;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.Extensions.Caching.Memory;
-using Microsoft.Extensions.Options;
-using System.Text;
-using Teamo.Assets.Email;
-using Teamo.Assets.SMS;
 using Teamo.Identity.API.Infrastructure.Models;
 
 namespace Teamo.Identity.API.Infrastructure.Domain
@@ -57,7 +51,7 @@ namespace Teamo.Identity.API.Infrastructure.Domain
         /// <br>3- check if user is locked</br> 
         /// <br>4- if two factor is enabled</br>
         /// <br>    4.1- then if verification code is not recieved send it</br>
-        /// <br>    4.1- else if verification code is recieved check it</br>
+        /// <br>    4.2- else if verification code is recieved check it</br>
         /// <br>5- sign in by fined users username and recived password</br>
         /// <br>6- return tocken includ (email, username, fullname)</br>
         /// </summary>

@@ -62,6 +62,8 @@ namespace Teamo.Identity.Test
         protected readonly string WRONG_VERIFICATION_CODE = "222221";
         protected readonly string RESET_TOKEN = "333333";
         protected readonly string WRONG_RESET_TOKEN = "333331";
+        protected readonly string FULL_NAME = "full_name";
+        protected readonly string PHONE_NUMBER = "0919000000";
         public BaseTestClass()
         {
             EXISTS_USER = new()

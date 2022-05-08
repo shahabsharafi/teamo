@@ -10,7 +10,7 @@ namespace Teamo.Identity.API.Infrastructure.Domain
 
     public class AuthenticationService : IAuthenticationService
     {
-       private readonly UserManager<ApplicationUser> _userManager;
+        private readonly UserManager<ApplicationUser> _userManager;
         public AuthenticationService(UserManager<ApplicationUser> userManager)
         {
             _userManager = userManager;
