@@ -5,7 +5,7 @@ using Teamo.Identity.API.Infrastructure.Domain;
 namespace Teamo.Identity.API.Controllers
 {
     [ApiController]
-    [Route("[controller]")]
+    [Route("api/[controller]")]
     public class IdentityController : ControllerBase
     {
         private readonly IMediator _mediator;
@@ -15,7 +15,8 @@ namespace Teamo.Identity.API.Controllers
             _mediator = mediator;
         }
 
-        [HttpPut(Name = "RegisterUser")]
+        [HttpPost]
+        [Route("register-user")]
         public async Task<ActionResult> RegisterUser(
             RegisterUserCommand registerUserCommand, 
             CancellationToken cancellationToken)
@@ -24,7 +25,8 @@ namespace Teamo.Identity.API.Controllers
             return Ok();
         }
 
-        [HttpPut(Name = "Login")]
+        [HttpPost]
+        [Route("login")]
         public async Task<ActionResult<LoginDto>> Login(
             LoginCommand loginCommand, 
             CancellationToken cancellationToken)
@@ -33,7 +35,8 @@ namespace Teamo.Identity.API.Controllers
             return Ok(dto);
         }
 
-        [HttpPut(Name = "ForgotPassword")]
+        [HttpPost]
+        [Route("forgot-password")]
         public async Task<ActionResult<ForgotPasswordDto>> ForgotPassword(
             ForgotPasswordCommand forgotPasswordCommand, 
             CancellationToken cancellationToken)
@@ -42,7 +45,8 @@ namespace Teamo.Identity.API.Controllers
             return Ok(dto);
         }
 
-        [HttpPut(Name = "ChangePassword")]
+        [HttpPost]
+        [Route("change-password")]
         public async Task<ActionResult> ChangePassword(
             ChangePasswordCommand changePasswordCommand,
             CancellationToken cancellationToken)
