@@ -22,11 +22,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="ClientApp\src\app\account\components\login\" />
-    <Folder Include="ClientApp\src\app\account\components\forgot-password\" />
-    <Folder Include="ClientApp\src\app\account\components\change-password\" />
     <Folder Include="ClientApp\src\app\account\components\" />
-    <Folder Include="ClientApp\src\app\account\components\register-user\" />
   </ItemGroup>
 
     <Target Name="DebugEnsureNodeEnv" BeforeTargets="Build" Condition=" '$(Configuration)' == 'Debug' And !Exists('$(SpaRoot)node_modules') ">

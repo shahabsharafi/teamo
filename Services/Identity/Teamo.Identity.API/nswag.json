@@ -46,7 +46,7 @@
             "createWebHostBuilderMethod": null,
             "startupType": null,
             "allowNullableBodyParameters": true,
-            "output": "$(TypescriptOutputPath)/identity-service.proxy.json",
+            "output": null,
             "outputType": "OpenApi3",
             "newLineBehavior": "Auto",
             "assemblyPaths": [],
